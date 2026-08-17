@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -549,10 +550,18 @@ namespace HeroGuild.ClientInstaller
             }
             else if (Directory.Exists(t))
             {
+                string mmc = FindMultiMcPackJson(t);
                 string modsDir = Path.Combine(t, "mods");
-                if (Directory.Exists(modsDir))
+                int modCount = Directory.Exists(modsDir) ? Directory.GetFiles(modsDir, "*.jar").Length : 0;
+
+                if (!string.IsNullOrEmpty(mmc))
                 {
-                    int modCount = Directory.GetFiles(modsDir, "*.jar").Length;
+                    string instName = Path.GetFileName(Path.GetDirectoryName(mmc));
+                    lblTargetStatus.Text = string.Format("✅ Обнаружен инстанс MultiMC/Prism «{0}» (модов в mods/: {1})", instName, modCount);
+                    lblTargetStatus.ForeColor = ColorGoldPrimary;
+                }
+                else if (Directory.Exists(modsDir))
+                {
                     lblTargetStatus.Text = string.Format("✅ Папка существует. Обнаружена папка mods/ (файлов .jar: {0})", modCount);
                     lblTargetStatus.ForeColor = ColorGoldPrimary;
                 }
@@ -1217,13 +1226,23 @@ namespace HeroGuild.ClientInstaller
                 }
             }
 
+            // 1. Auto-configure MultiMC / Prism instance if detected
+            bool isMultiMc = ConfigureMultiMcInstance(targetDir, mcVersion, requiredLoaderVer, (msg) => Log(msg));
+
             Version requiredV = ParseSemanticVersion(requiredLoaderVer) ?? new Version(0, 19, 3);
             Version installedV = GetInstalledFabricLoaderVersion(targetDir, mcVersion);
 
-            if (installedV != null && installedV >= requiredV)
+            if (installedV != null && installedV >= requiredV && !isMultiMc)
             {
                 Log(string.Format("✅ Fabric Loader актуален (найдена версия {0} для Minecraft {1})", installedV, mcVersion));
                 UpdateLauncherProfiles(targetDir, mcVersion, installedV.ToString(3));
+                return;
+            }
+
+            if (isMultiMc)
+            {
+                // MultiMC instance successfully updated
+                UpdateLauncherProfiles(targetDir, mcVersion, requiredLoaderVer);
                 return;
             }
 
@@ -1321,10 +1340,170 @@ namespace HeroGuild.ClientInstaller
             UpdateLauncherProfiles(targetDir, mcVersion, requiredLoaderVer);
         }
 
+        private static string FindMultiMcPackJson(string targetDir)
+        {
+            if (string.IsNullOrEmpty(targetDir)) return null;
+
+            string direct = Path.Combine(targetDir, "mmc-pack.json");
+            if (File.Exists(direct)) return direct;
+
+            try
+            {
+                string parent = Path.GetDirectoryName(targetDir.TrimEnd('\\', '/'));
+                if (!string.IsNullOrEmpty(parent))
+                {
+                    string parentPack = Path.Combine(parent, "mmc-pack.json");
+                    if (File.Exists(parentPack)) return parentPack;
+                }
+            }
+            catch { }
+
+            return null;
+        }
+
+        private static bool ConfigureMultiMcInstance(string targetDir, string mcVersion, string loaderVersion, Action<string> logAction)
+        {
+            string packJsonPath = FindMultiMcPackJson(targetDir);
+            if (string.IsNullOrEmpty(packJsonPath) || !File.Exists(packJsonPath)) return false;
+
+            try
+            {
+                JavaScriptSerializer js = new JavaScriptSerializer();
+                js.MaxJsonLength = int.MaxValue;
+                string json = File.ReadAllText(packJsonPath, Encoding.UTF8);
+                Dictionary<string, object> root = js.Deserialize<Dictionary<string, object>>(json);
+                if (root == null) return false;
+
+                ArrayList components = null;
+                if (root.ContainsKey("components") && root["components"] is ArrayList)
+                {
+                    components = (ArrayList)root["components"];
+                }
+                else
+                {
+                    components = new ArrayList();
+                    root["components"] = components;
+                }
+
+                bool hasIntermediary = false;
+                bool hasLoader = false;
+
+                foreach (object compObj in components)
+                {
+                    if (compObj is Dictionary<string, object>)
+                    {
+                        var comp = (Dictionary<string, object>)compObj;
+                        if (comp.ContainsKey("uid") && comp["uid"] != null)
+                        {
+                            string uid = comp["uid"].ToString();
+                            if (uid == "net.fabricmc.intermediary")
+                            {
+                                hasIntermediary = true;
+                                comp["version"] = mcVersion;
+                                comp["cachedVersion"] = mcVersion;
+                            }
+                            else if (uid == "net.fabricmc.fabric-loader")
+                            {
+                                hasLoader = true;
+                                comp["version"] = loaderVersion;
+                                comp["cachedVersion"] = loaderVersion;
+                                comp["important"] = true;
+                            }
+                        }
+                    }
+                }
+
+                if (!hasIntermediary)
+                {
+                    Dictionary<string, object> interComp = new Dictionary<string, object>();
+                    interComp["cachedName"] = "Intermediary Mappings";
+                    interComp["cachedVersion"] = mcVersion;
+                    interComp["cachedVolatile"] = true;
+                    interComp["dependencyOnly"] = true;
+                    interComp["uid"] = "net.fabricmc.intermediary";
+                    interComp["version"] = mcVersion;
+
+                    int mcIdx = -1;
+                    for (int i = 0; i < components.Count; i++)
+                    {
+                        if (components[i] is Dictionary<string, object> && ((Dictionary<string, object>)components[i]).ContainsKey("uid") && ((Dictionary<string, object>)components[i])["uid"].ToString() == "net.minecraft")
+                        {
+                            mcIdx = i;
+                            break;
+                        }
+                    }
+                    if (mcIdx != -1) components.Insert(mcIdx + 1, interComp);
+                    else components.Add(interComp);
+                }
+
+                if (!hasLoader)
+                {
+                    Dictionary<string, object> loaderComp = new Dictionary<string, object>();
+                    loaderComp["cachedName"] = "Fabric Loader";
+                    loaderComp["cachedVersion"] = loaderVersion;
+                    loaderComp["important"] = true;
+                    loaderComp["uid"] = "net.fabricmc.fabric-loader";
+                    loaderComp["version"] = loaderVersion;
+                    components.Add(loaderComp);
+                }
+
+                string outJson = js.Serialize(root);
+                File.WriteAllText(packJsonPath, outJson, Encoding.UTF8);
+
+                string instDir = Path.GetDirectoryName(packJsonPath);
+                string instName = Path.GetFileName(instDir);
+                if (logAction != null)
+                {
+                    logAction(string.Format("✅ Обнаружен инстанс MultiMC/Prism «{0}»! Fabric Loader {1} активирован в mmc-pack.json", instName, loaderVersion));
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (logAction != null)
+                {
+                    logAction("Предупреждение: Не удалось обновить mmc-pack.json: " + ex.Message);
+                }
+                return false;
+            }
+        }
+
         private static Version GetInstalledFabricLoaderVersion(string targetDir, string mcVersion)
         {
             try
             {
+                // 1. Check MultiMC / Prism mmc-pack.json
+                string mmcPackPath = FindMultiMcPackJson(targetDir);
+                if (!string.IsNullOrEmpty(mmcPackPath) && File.Exists(mmcPackPath))
+                {
+                    try
+                    {
+                        JavaScriptSerializer js = new JavaScriptSerializer();
+                        string json = File.ReadAllText(mmcPackPath, Encoding.UTF8);
+                        Dictionary<string, object> root = js.Deserialize<Dictionary<string, object>>(json);
+                        if (root != null && root.ContainsKey("components") && root["components"] is ArrayList)
+                        {
+                            foreach (object compObj in (ArrayList)root["components"])
+                            {
+                                if (compObj is Dictionary<string, object>)
+                                {
+                                    var comp = (Dictionary<string, object>)compObj;
+                                    if (comp.ContainsKey("uid") && comp["uid"] != null && comp["uid"].ToString() == "net.fabricmc.fabric-loader")
+                                    {
+                                        if (comp.ContainsKey("version") && comp["version"] != null)
+                                        {
+                                            Version v = ParseSemanticVersion(comp["version"].ToString());
+                                            if (v != null) return v;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                // 2. Check standard .minecraft/versions/
                 string versionsDir = Path.Combine(targetDir, "versions");
                 if (!Directory.Exists(versionsDir)) return null;
 
