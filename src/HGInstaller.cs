@@ -55,7 +55,10 @@ namespace HeroGuild.ClientInstaller
         private readonly Color ColorTextMuted = Color.FromArgb(200, 188, 170);
 
         private const string DISCORD_URL = "https://discord.gg/W3harVKevk";
-        private const string GITHUB_SERVER_INFO_URL = "https://github.com/Vxnku/-HG-HGMM/raw/main/server_info.json";
+        private const string GITHUB_SERVER_INFO_URL = "https://vxnku.github.io/-HG-HGMM/server_info.json";
+        private const string CLOUDFLARE_SERVER_INFO_URL = "https://bold-bread-e4ce.yuliy-ml.workers.dev/server_info.json";
+        private const string GDRIVE_SERVER_INFO_URL = "https://drive.usercontent.google.com/download?id=1haCJcm_oAM3LR0Mhr-hM2a7Ln1-B5_Qt&export=download&confirm=t";
+        private const string JSDELIVR_SERVER_INFO_URL = "https://cdn.jsdelivr.net/gh/Vxnku/-HG-HGMM@main/server_info.json";
 
         private PictureBox picLogo;
         private PictureBox picDiscord;
@@ -76,6 +79,7 @@ namespace HeroGuild.ClientInstaller
         private Button btnOpenTargetFolder;
         private Label lblTargetStatus;
 
+        private CheckBox chkInstallFabric;
         private CheckBox chkCleanMods;
         private CheckBox chkUnpackRP;
         private CheckBox chkAddServer;
@@ -181,8 +185,8 @@ namespace HeroGuild.ClientInstaller
         private void InitializeComponent()
         {
             this.Text = "HeroGuild Client Installer • Fabric 1.21.1";
-            this.Size = new Size(740, 710);
-            this.MinimumSize = new Size(680, 620);
+            this.Size = new Size(740, 735);
+            this.MinimumSize = new Size(680, 640);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.BackColor = ColorBgMain;
             this.ForeColor = ColorTextBright;
@@ -333,43 +337,51 @@ namespace HeroGuild.ClientInstaller
             this.Controls.Add(lblTargetStatus);
 
             // --- SECTION 3: Options ---
+            chkInstallFabric = new CheckBox();
+            chkInstallFabric.Text = "Проверить и установить Fabric Loader 0.19.3 (Рекомендуется)";
+            chkInstallFabric.Checked = true;
+            chkInstallFabric.ForeColor = ColorGoldPrimary;
+            chkInstallFabric.Location = new Point(25, 236);
+            chkInstallFabric.Size = new Size(670, 24);
+            this.Controls.Add(chkInstallFabric);
+
             chkCleanMods = new CheckBox();
             chkCleanMods.Text = "Очистить старые .jar моды перед установкой (Рекомендуется)";
             chkCleanMods.Checked = true;
             chkCleanMods.ForeColor = ColorTextBright;
-            chkCleanMods.Location = new Point(25, 236);
-            chkCleanMods.Size = new Size(580, 24);
+            chkCleanMods.Location = new Point(25, 262);
+            chkCleanMods.Size = new Size(670, 24);
             this.Controls.Add(chkCleanMods);
 
             chkUnpackRP = new CheckBox();
             chkUnpackRP.Text = "Распаковывать ресурспаки как папки (и удалять zip-архивы)";
             chkUnpackRP.Checked = true;
             chkUnpackRP.ForeColor = ColorGoldPrimary;
-            chkUnpackRP.Location = new Point(25, 262);
-            chkUnpackRP.Size = new Size(580, 24);
+            chkUnpackRP.Location = new Point(25, 288);
+            chkUnpackRP.Size = new Size(670, 24);
             this.Controls.Add(chkUnpackRP);
 
             chkAddServer = new CheckBox();
             chkAddServer.Text = "Установить сервер HeroGuild в список сетевой игры (servers.dat)";
             chkAddServer.Checked = true;
             chkAddServer.ForeColor = ColorGoldPrimary;
-            chkAddServer.Location = new Point(25, 288);
-            chkAddServer.Size = new Size(580, 24);
+            chkAddServer.Location = new Point(25, 314);
+            chkAddServer.Size = new Size(670, 24);
             this.Controls.Add(chkAddServer);
 
             chkExtractOverrides = new CheckBox();
             chkExtractOverrides.Text = "Установить локальные конфигурации из .mrpack (если есть)";
             chkExtractOverrides.Checked = true;
             chkExtractOverrides.ForeColor = ColorTextBright;
-            chkExtractOverrides.Location = new Point(25, 314);
-            chkExtractOverrides.Size = new Size(580, 24);
+            chkExtractOverrides.Location = new Point(25, 340);
+            chkExtractOverrides.Size = new Size(670, 24);
             this.Controls.Add(chkExtractOverrides);
 
             // --- SECTION 4: Install Button ---
             btnInstall = new Button();
             btnInstall.Text = "УСТАНОВИТЬ СБОРКУ";
             btnInstall.Font = new Font("Segoe UI", 11.5F, FontStyle.Bold);
-            btnInstall.Location = new Point(25, 348);
+            btnInstall.Location = new Point(25, 372);
             btnInstall.Size = new Size(675, 45);
             btnInstall.BackColor = ColorGoldPrimary;
             btnInstall.ForeColor = Color.FromArgb(18, 16, 12);
@@ -382,13 +394,13 @@ namespace HeroGuild.ClientInstaller
             // --- SECTION 5: Progress & Logs ---
             lblStatus = new Label();
             lblStatus.Text = "Готов к установке.";
-            lblStatus.Location = new Point(25, 400);
+            lblStatus.Location = new Point(25, 424);
             lblStatus.Size = new Size(675, 20);
             lblStatus.ForeColor = ColorTextMuted;
             this.Controls.Add(lblStatus);
 
             progressBar = new ProgressBar();
-            progressBar.Location = new Point(25, 423);
+            progressBar.Location = new Point(25, 447);
             progressBar.Size = new Size(675, 14);
             this.Controls.Add(progressBar);
 
@@ -396,8 +408,8 @@ namespace HeroGuild.ClientInstaller
             txtLog.Multiline = true;
             txtLog.ScrollBars = ScrollBars.Vertical;
             txtLog.ReadOnly = true;
-            txtLog.Location = new Point(25, 446);
-            txtLog.Size = new Size(675, 208);
+            txtLog.Location = new Point(25, 468);
+            txtLog.Size = new Size(675, 218);
             txtLog.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             txtLog.BackColor = Color.FromArgb(14, 13, 11);
             txtLog.ForeColor = Color.FromArgb(215, 208, 195);
@@ -640,6 +652,7 @@ namespace HeroGuild.ClientInstaller
             {
                 PackPath = packPath,
                 TargetDir = targetDir,
+                InstallFabric = chkInstallFabric.Checked,
                 CleanMods = chkCleanMods.Checked,
                 UnpackRP = chkUnpackRP.Checked,
                 AddServer = chkAddServer.Checked,
@@ -653,6 +666,7 @@ namespace HeroGuild.ClientInstaller
         {
             public string PackPath { get; set; }
             public string TargetDir { get; set; }
+            public bool InstallFabric { get; set; }
             public bool CleanMods { get; set; }
             public bool UnpackRP { get; set; }
             public bool AddServer { get; set; }
@@ -725,10 +739,16 @@ namespace HeroGuild.ClientInstaller
                 int totalFiles = index.files != null ? index.files.Count : 0;
                 Log(string.Format("Найдено файлов для загрузки (моды + текстурпаки): {0}", totalFiles));
 
-                // 1. Clean old mods if requested
+                // 1. Check and install Fabric Loader if requested
+                if (args.InstallFabric)
+                {
+                    EnsureFabricLoaderInstalled(args.TargetDir, index);
+                }
+
+                // 2. Clean old mods if requested
                 if (args.CleanMods && Directory.Exists(modsDir))
                 {
-                    UpdateStatus(5, "Очистка старых модов...", "Очистка предыдущих модов в папке mods/...");
+                    UpdateStatus(10, "Очистка старых модов...", "Очистка предыдущих модов в папке mods/...");
                     string[] existingMods = Directory.GetFiles(modsDir, "*.jar");
                     foreach (string mod in existingMods)
                     {
@@ -798,25 +818,43 @@ namespace HeroGuild.ClientInstaller
                             continue;
                         }
 
-                        string downloadUrl = file.downloads[0];
                         int percent = 10 + (int)(((float)(i + 1) / totalFiles) * 70);
                         UpdateStatus(percent, string.Format("Загрузка ({0}/{1}): {2}", i + 1, totalFiles, fileName));
 
-                        try
-                        {
-                            DownloadFileBuffered(downloadUrl, destPath);
-                            downloadedCount++;
-                            FileInfo downloadedFi = new FileInfo(destPath);
-                            Log(string.Format("[{0}/{1}] [Скачан] {2} ({3:N0} КБ)", i + 1, totalFiles, fileName, downloadedFi.Length / 1024.0));
+                        bool fileSuccess = false;
+                        Exception lastEx = null;
 
-                            if (args.UnpackRP && file.path.StartsWith("resourcepacks/") && file.path.EndsWith(".zip"))
+                        for (int m = 0; m < file.downloads.Count; m++)
+                        {
+                            string downloadUrl = file.downloads[m];
+                            try
                             {
-                                UnpackResourcePackZipAndClean(destPath, rpsDir);
+                                int attemptsForMirror = (file.downloads.Count > 1) ? 2 : 10;
+                                DownloadFileBufferedWithRetry(downloadUrl, destPath, (msg) => Log(msg), (st) => UpdateStatus(percent, st), attemptsForMirror);
+                                downloadedCount++;
+                                fileSuccess = true;
+                                FileInfo downloadedFi = new FileInfo(destPath);
+                                Log(string.Format("[{0}/{1}] [Скачан] {2} ({3:N0} КБ)", i + 1, totalFiles, fileName, downloadedFi.Length / 1024.0));
+
+                                if (args.UnpackRP && file.path.StartsWith("resourcepacks/") && file.path.EndsWith(".zip"))
+                                {
+                                    UnpackResourcePackZipAndClean(destPath, rpsDir);
+                                }
+                                break;
+                            }
+                            catch (Exception ex)
+                            {
+                                lastEx = ex;
+                                if (m < file.downloads.Count - 1)
+                                {
+                                    Log(string.Format("   -> Зеркало {0} недоступно, переключение на резервное зеркало...", m + 1));
+                                }
                             }
                         }
-                        catch (Exception ex)
+
+                        if (!fileSuccess)
                         {
-                            Log(string.Format("[{0}/{1}] [СБОЙ] {2}: {3}", i + 1, totalFiles, fileName, ex.Message));
+                            Log(string.Format("[{0}/{1}] [СБОЙ] {2}: {3}", i + 1, totalFiles, fileName, lastEx != null ? lastEx.Message : "Все зеркала недоступны"));
                         }
                     }
                 }
@@ -878,28 +916,18 @@ namespace HeroGuild.ClientInstaller
             string serverName = "HeroGuild";
             string serverIp = "vrsetmain.joinserver.ru";
 
-            try
+            string[] candidateUrls = new string[] {
+                GITHUB_SERVER_INFO_URL,
+                CLOUDFLARE_SERVER_INFO_URL,
+                GDRIVE_SERVER_INFO_URL,
+                JSDELIVR_SERVER_INFO_URL
+            };
+
+            ServerInfo info = FetchServerInfoWithRetry(candidateUrls, 2);
+            if (info != null && !string.IsNullOrEmpty(info.ip))
             {
-                // Try fetching latest IP configuration from GitHub
-                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(GITHUB_SERVER_INFO_URL);
-                req.UserAgent = "Mozilla/5.0";
-                req.Timeout = 10000;
-                using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
-                using (StreamReader sr = new StreamReader(resp.GetResponseStream(), Encoding.UTF8))
-                {
-                    string json = sr.ReadToEnd();
-                    JavaScriptSerializer js = new JavaScriptSerializer();
-                    ServerInfo info = js.Deserialize<ServerInfo>(json);
-                    if (info != null && !string.IsNullOrEmpty(info.ip))
-                    {
-                        serverIp = info.ip.Trim();
-                        if (!string.IsNullOrEmpty(info.name)) serverName = info.name.Trim();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Log("Инфо: Использован стандартный адрес сервера (GitHub: " + ex.Message + ")");
+                serverIp = info.ip.Trim();
+                if (!string.IsNullOrEmpty(info.name)) serverName = info.name.Trim();
             }
 
             try
@@ -913,6 +941,53 @@ namespace HeroGuild.ClientInstaller
             {
                 Log("Предупреждение: Не удалось обновить servers.dat: " + ex.Message);
             }
+        }
+
+        private ServerInfo FetchServerInfoWithRetry(string[] candidateUrls, int maxAttemptsPerUrl)
+        {
+            CookieContainer cookieJar = new CookieContainer();
+            foreach (string currentUrl in candidateUrls)
+            {
+                if (string.IsNullOrEmpty(currentUrl)) continue;
+                for (int attempt = 1; attempt <= maxAttemptsPerUrl; attempt++)
+                {
+                    try
+                    {
+                        HttpWebRequest req = (HttpWebRequest)WebRequest.Create(currentUrl);
+                        req.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+                        req.Timeout = 10000;
+                        req.AllowAutoRedirect = true;
+                        req.CookieContainer = cookieJar;
+                        using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+                        using (StreamReader sr = new StreamReader(resp.GetResponseStream(), Encoding.UTF8))
+                        {
+                            string json = sr.ReadToEnd();
+                            JavaScriptSerializer js = new JavaScriptSerializer();
+                            ServerInfo info = js.Deserialize<ServerInfo>(json);
+                            if (info != null && !string.IsNullOrEmpty(info.ip))
+                            {
+                                return info;
+                            }
+                        }
+                    }
+                    catch (WebException)
+                    {
+                        int delaySeconds = Math.Min(attempt * 2, 10);
+                        if (attempt < maxAttemptsPerUrl)
+                        {
+                            Thread.Sleep(delaySeconds * 1000);
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        if (attempt < maxAttemptsPerUrl)
+                        {
+                            Thread.Sleep(2000);
+                        }
+                    }
+                }
+            }
+            return null;
         }
 
         private static byte[] CreateNbtServersDat(string serverName, string serverIp)
@@ -1028,23 +1103,68 @@ namespace HeroGuild.ClientInstaller
             }
         }
 
-        private static void DownloadFileBuffered(string url, string destinationPath)
+        private static void DownloadFileBufferedWithRetry(string url, string destinationPath, Action<string> logAction, Action<string> statusAction, int maxAttempts = 15)
         {
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-            request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
-            request.Timeout = 60000;
-            request.ReadWriteTimeout = 60000;
-            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
-
-            using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
-            using (Stream responseStream = response.GetResponseStream())
-            using (FileStream fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            int attempt = 0;
+            CookieContainer cookieJar = new CookieContainer();
+            while (true)
             {
-                byte[] buffer = new byte[81920];
-                int bytesRead;
-                while ((bytesRead = responseStream.Read(buffer, 0, buffer.Length)) > 0)
+                attempt++;
+                try
                 {
-                    fileStream.Write(buffer, 0, bytesRead);
+                    HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                    request.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36";
+                    request.Timeout = 60000;
+                    request.ReadWriteTimeout = 60000;
+                    request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+                    request.AllowAutoRedirect = true;
+                    request.CookieContainer = cookieJar;
+
+                    using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
+                    using (Stream responseStream = response.GetResponseStream())
+                    using (FileStream fileStream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        byte[] buffer = new byte[81920];
+                        int bytesRead;
+                        while ((bytesRead = responseStream.Read(buffer, 0, buffer.Length)) > 0)
+                        {
+                            fileStream.Write(buffer, 0, bytesRead);
+                        }
+                    }
+                    return;
+                }
+                catch (WebException wex)
+                {
+                    int statusCode = 0;
+                    HttpWebResponse httpResp = wex.Response as HttpWebResponse;
+                    if (httpResp != null)
+                    {
+                        statusCode = (int)httpResp.StatusCode;
+                    }
+
+                    if (attempt >= maxAttempts)
+                    {
+                        throw new Exception(string.Format("Превышен лимит попыток ({0}). Код ошибки: {1}. {2}", maxAttempts, statusCode, wex.Message), wex);
+                    }
+
+                    int delaySeconds = Math.Min(attempt * 2, 30);
+                    string reason = (statusCode == 429) ? "Лимит запросов (429)" : ("Сбой соединения (" + wex.Message + ")");
+                    string logMsg = string.Format("   [!] {0}. Повторная попытка {1}/{2} через {3} сек...", reason, attempt, maxAttempts, delaySeconds);
+
+                    if (logAction != null) logAction(logMsg);
+                    if (statusAction != null) statusAction(string.Format("Ожидание связи ({0} сек)...", delaySeconds));
+
+                    Thread.Sleep(delaySeconds * 1000);
+                }
+                catch (Exception ex)
+                {
+                    if (attempt >= maxAttempts)
+                    {
+                        throw;
+                    }
+                    int delaySeconds = Math.Min(attempt * 2, 30);
+                    if (logAction != null) logAction(string.Format("   [!] Ошибка: {0}. Повтор через {1} сек...", ex.Message, delaySeconds));
+                    Thread.Sleep(delaySeconds * 1000);
                 }
             }
         }
@@ -1076,6 +1196,280 @@ namespace HeroGuild.ClientInstaller
                     sb.Append(hash[i].ToString("x2"));
                 }
                 return sb.ToString();
+            }
+        }
+
+        private void EnsureFabricLoaderInstalled(string targetDir, ModrinthIndex index)
+        {
+            string mcVersion = "1.21.1";
+            string requiredLoaderVer = "0.19.3";
+
+            if (index != null && index.dependencies != null)
+            {
+                if (index.dependencies.ContainsKey("minecraft") && !string.IsNullOrEmpty(index.dependencies["minecraft"]))
+                {
+                    mcVersion = index.dependencies["minecraft"].Trim();
+                }
+                if (index.dependencies.ContainsKey("fabric-loader") && !string.IsNullOrEmpty(index.dependencies["fabric-loader"]))
+                {
+                    requiredLoaderVer = index.dependencies["fabric-loader"].Trim();
+                }
+            }
+
+            Version requiredV = ParseSemanticVersion(requiredLoaderVer) ?? new Version(0, 19, 3);
+            Version installedV = GetInstalledFabricLoaderVersion(targetDir, mcVersion);
+
+            if (installedV != null && installedV >= requiredV)
+            {
+                Log(string.Format("✅ Fabric Loader актуален (найдена версия {0} для Minecraft {1})", installedV, mcVersion));
+                UpdateLauncherProfiles(targetDir, mcVersion, installedV.ToString(3));
+                return;
+            }
+
+            if (installedV != null)
+            {
+                Log(string.Format("⚠️ Обнаружен устаревший Fabric Loader (версия {0}). Требуется: {1}", installedV, requiredLoaderVer));
+                Log("-> Загрузка и обновление Fabric Loader " + requiredLoaderVer + "...");
+            }
+            else
+            {
+                Log(string.Format("ℹ️ Fabric Loader для Minecraft {0} не найден в папке versions/.", mcVersion));
+                Log("-> Загрузка и установка Fabric Loader " + requiredLoaderVer + "...");
+            }
+
+            UpdateStatus(5, "Установка Fabric Loader " + requiredLoaderVer + "...");
+
+            string versionsDir = Path.Combine(targetDir, "versions");
+            if (!Directory.Exists(versionsDir))
+            {
+                Directory.CreateDirectory(versionsDir);
+            }
+
+            string zipFileName = string.Format("fabric-loader-{0}-{1}.zip", requiredLoaderVer, mcVersion);
+            string tempZip = Path.Combine(Path.GetTempPath(), "hg_fabric_" + Guid.NewGuid().ToString("N") + ".zip");
+
+            List<string> candidateUrls = new List<string>
+            {
+                string.Format("https://meta.fabricmc.net/v2/versions/loader/{0}/{1}/profile/zip", mcVersion, requiredLoaderVer),
+                string.Format("https://vxnku.github.io/-HG-HGMM/fabric/{0}", zipFileName),
+                string.Format("https://bold-bread-e4ce.yuliy-ml.workers.dev/fabric/{0}", zipFileName),
+                string.Format("https://cdn.jsdelivr.net/gh/Vxnku/-HG-HGMM@main/fabric/{0}", zipFileName)
+            };
+
+            bool downloaded = false;
+            Exception lastError = null;
+
+            for (int m = 0; m < candidateUrls.Count; m++)
+            {
+                string currentUrl = candidateUrls[m];
+                try
+                {
+                    int attempts = (candidateUrls.Count > 1) ? 2 : 5;
+                    DownloadFileBufferedWithRetry(currentUrl, tempZip, (msg) => Log(msg), (st) => UpdateStatus(5, st), attempts);
+                    downloaded = true;
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    lastError = ex;
+                    if (m < candidateUrls.Count - 1)
+                    {
+                        Log(string.Format("   -> Источник Fabric #{0} недоступен, переключение на резервное зеркало...", m + 1));
+                    }
+                }
+            }
+
+            if (!downloaded || !File.Exists(tempZip))
+            {
+                throw new Exception(string.Format("Не удалось загрузить Fabric Loader {0}: {1}", requiredLoaderVer, lastError != null ? lastError.Message : "Все зеркала недоступны"));
+            }
+
+            try
+            {
+                using (ZipArchive zip = ZipFile.OpenRead(tempZip))
+                {
+                    foreach (ZipArchiveEntry entry in zip.Entries)
+                    {
+                        string rel = entry.FullName.Replace('/', '\\');
+                        string targetPath = Path.Combine(versionsDir, rel);
+
+                        if (entry.FullName.EndsWith("/") || entry.FullName.EndsWith("\\") || string.IsNullOrEmpty(entry.Name))
+                        {
+                            if (!Directory.Exists(targetPath)) Directory.CreateDirectory(targetPath);
+                        }
+                        else
+                        {
+                            string parent = Path.GetDirectoryName(targetPath);
+                            if (!string.IsNullOrEmpty(parent) && !Directory.Exists(parent)) Directory.CreateDirectory(parent);
+                            entry.ExtractToFile(targetPath, true);
+                        }
+                    }
+                }
+
+                Log(string.Format("✅ Fabric Loader {0} для Minecraft {1} успешно установлен в versions/!", requiredLoaderVer, mcVersion));
+            }
+            finally
+            {
+                if (File.Exists(tempZip))
+                {
+                    try { File.Delete(tempZip); } catch { }
+                }
+            }
+
+            UpdateLauncherProfiles(targetDir, mcVersion, requiredLoaderVer);
+        }
+
+        private static Version GetInstalledFabricLoaderVersion(string targetDir, string mcVersion)
+        {
+            try
+            {
+                string versionsDir = Path.Combine(targetDir, "versions");
+                if (!Directory.Exists(versionsDir)) return null;
+
+                Version maxVersion = null;
+
+                foreach (string dir in Directory.GetDirectories(versionsDir))
+                {
+                    string dirName = Path.GetFileName(dir);
+                    string jsonPath = Path.Combine(dir, dirName + ".json");
+                    if (!File.Exists(jsonPath))
+                    {
+                        string[] anyJsons = Directory.GetFiles(dir, "*.json");
+                        if (anyJsons.Length > 0) jsonPath = anyJsons[0];
+                        else continue;
+                    }
+
+                    try
+                    {
+                        string json = File.ReadAllText(jsonPath, Encoding.UTF8);
+                        bool isFabric = json.Contains("net.fabricmc.loader") || json.Contains("net.fabricmc:fabric-loader") || dirName.IndexOf("fabric", StringComparison.OrdinalIgnoreCase) >= 0;
+                        if (!isFabric) continue;
+
+                        bool isTargetMc = json.Contains(mcVersion) || dirName.Contains(mcVersion);
+                        if (!isTargetMc) continue;
+
+                        // 1. Search in libraries
+                        int idx = json.IndexOf("net.fabricmc:fabric-loader:");
+                        if (idx != -1)
+                        {
+                            int start = idx + "net.fabricmc:fabric-loader:".Length;
+                            int end = json.IndexOfAny(new char[] { '"', '\'', ' ', ',', '\\', '\r', '\n' }, start);
+                            if (end != -1)
+                            {
+                                string verStr = json.Substring(start, end - start).Trim();
+                                Version v = ParseSemanticVersion(verStr);
+                                if (v != null && (maxVersion == null || v > maxVersion))
+                                {
+                                    maxVersion = v;
+                                }
+                            }
+                        }
+
+                        // 2. Search in directory / id
+                        if (dirName.StartsWith("fabric-loader-", StringComparison.OrdinalIgnoreCase))
+                        {
+                            string rest = dirName.Substring("fabric-loader-".Length);
+                            int dash = rest.IndexOf('-');
+                            if (dash != -1)
+                            {
+                                string verStr = rest.Substring(0, dash);
+                                Version v = ParseSemanticVersion(verStr);
+                                if (v != null && (maxVersion == null || v > maxVersion))
+                                {
+                                    maxVersion = v;
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+                }
+
+                return maxVersion;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static Version ParseSemanticVersion(string str)
+        {
+            if (string.IsNullOrEmpty(str)) return null;
+            str = str.Trim();
+            int plusIdx = str.IndexOf('+');
+            if (plusIdx != -1) str = str.Substring(0, plusIdx);
+            int dashIdx = str.IndexOf('-');
+            if (dashIdx != -1) str = str.Substring(0, dashIdx);
+
+            string[] parts = str.Split('.');
+            if (parts.Length == 1) str += ".0.0";
+            else if (parts.Length == 2) str += ".0";
+
+            Version v;
+            if (Version.TryParse(str, out v)) return v;
+            return null;
+        }
+
+        private void UpdateLauncherProfiles(string targetDir, string mcVersion, string loaderVersion)
+        {
+            string[] profileFiles = new string[] { "launcher_profiles.json", "launcher_profiles_microsoft_store.json" };
+            string versionId = string.Format("fabric-loader-{0}-{1}", loaderVersion, mcVersion);
+            JavaScriptSerializer js = new JavaScriptSerializer();
+            js.MaxJsonLength = int.MaxValue;
+
+            foreach (string fileName in profileFiles)
+            {
+                string pPath = Path.Combine(targetDir, fileName);
+                if (!File.Exists(pPath) && fileName != "launcher_profiles.json") continue;
+
+                try
+                {
+                    Dictionary<string, object> root = null;
+                    if (File.Exists(pPath))
+                    {
+                        try
+                        {
+                            string json = File.ReadAllText(pPath, Encoding.UTF8);
+                            root = js.Deserialize<Dictionary<string, object>>(json);
+                        }
+                        catch { }
+                    }
+
+                    if (root == null) root = new Dictionary<string, object>();
+                    if (!root.ContainsKey("profiles") || !(root["profiles"] is Dictionary<string, object>))
+                    {
+                        root["profiles"] = new Dictionary<string, object>();
+                    }
+
+                    Dictionary<string, object> profiles = (Dictionary<string, object>)root["profiles"];
+                    string profileKey = "HeroGuild";
+
+                    Dictionary<string, object> hgProfile;
+                    if (profiles.ContainsKey(profileKey) && profiles[profileKey] is Dictionary<string, object>)
+                    {
+                        hgProfile = (Dictionary<string, object>)profiles[profileKey];
+                    }
+                    else
+                    {
+                        hgProfile = new Dictionary<string, object>();
+                        profiles[profileKey] = hgProfile;
+                    }
+
+                    hgProfile["name"] = string.Format("HeroGuild (Fabric {0})", mcVersion);
+                    hgProfile["type"] = "custom";
+                    hgProfile["created"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                    hgProfile["lastUsed"] = DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+                    hgProfile["icon"] = "Crafting_Table";
+                    hgProfile["lastVersionId"] = versionId;
+
+                    string outJson = js.Serialize(root);
+                    File.WriteAllText(pPath, outJson, Encoding.UTF8);
+                    Log(string.Format("[+] Профиль «HeroGuild (Fabric {0})» настроен в {1} (версия: {2})", mcVersion, fileName, versionId));
+                }
+                catch (Exception ex)
+                {
+                    Log(string.Format("Предупреждение: Не удалось обновить {0}: {1}", fileName, ex.Message));
+                }
             }
         }
 

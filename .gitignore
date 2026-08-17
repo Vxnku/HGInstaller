@@ -18,3 +18,12 @@
 # Large backup archives (hosted in -HG-HGMM repository)
 tools/*.zip
 *.zip
+
+# Google OAuth Secrets
+upload_script/credentials.json
+upload_script/token.json
+upload_script/service_account.json
+credentials.json
+token.json
+service_account.json
+

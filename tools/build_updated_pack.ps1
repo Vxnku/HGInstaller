@@ -37,8 +37,10 @@ $cblDest = "$repoMods\customblocklayer-0.1.jar"
 if (Test-Path -LiteralPath $cblSrc) {
     Copy-Item -LiteralPath $cblSrc -Destination $cblDest -Force
     Write-Host "Copied customblocklayer-0.1.jar to $cblDest"
+} elseif (Test-Path -LiteralPath $cblDest) {
+    Write-Host "Using existing customblocklayer-0.1.jar at $cblDest"
 } else {
-    Write-Error "customblocklayer-0.1.jar not found at $cblSrc!"
+    Write-Error "customblocklayer-0.1.jar not found at $cblSrc or $cblDest!"
     exit 1
 }
 
@@ -116,16 +118,18 @@ foreach ($rp in $rpNames) {
     $dstFolder = Join-Path $repo $rp
     $zipOut = Join-Path $repoZips "$rp.zip"
 
-    if (-not (Test-Path -LiteralPath $srcFolder)) {
-        Write-Error "Resource pack folder not found: $srcFolder"
+    if (Test-Path -LiteralPath $srcFolder) {
+        Write-Host "Syncing folder: $rp..."
+        Sync-Directory $srcFolder $dstFolder
+
+        Write-Host "Creating zip: $rp.zip..."
+        Create-CleanZip $srcFolder $zipOut
+    } elseif (Test-Path -LiteralPath $zipOut) {
+        Write-Host "Using existing zip: $rp.zip..."
+    } else {
+        Write-Error "Resource pack folder or zip not found: $srcFolder"
         exit 1
     }
-
-    Write-Host "Syncing folder: $rp..."
-    Sync-Directory $srcFolder $dstFolder
-
-    Write-Host "Creating zip: $rp.zip..."
-    Create-CleanZip $srcFolder $zipOut
 
     $h = Get-FileHashes $zipOut
     $rpHashInfo[$rp] = $h
@@ -177,24 +181,64 @@ if (Test-Path -LiteralPath $tsPath) {
     Write-Host "Added mod: tooltip-scroll-1.5.1+1.21.1.jar"
 }
 
-# Add customblocklayer from GitHub repo
+# Load Google Drive mappings if available
+$gdriveMapPath = "$root\upload_script\gdrive_files.json"
+$gdriveMapping = @{}
+if (Test-Path -LiteralPath $gdriveMapPath) {
+    try {
+        $gdRaw = [System.IO.File]::ReadAllText($gdriveMapPath, [System.Text.Encoding]::UTF8)
+        $gdObj = $js.DeserializeObject($gdRaw)
+        if ($gdObj -and $gdObj.ContainsKey("files")) {
+            $gdriveMapping = $gdObj["files"]
+        }
+    } catch { }
+}
+
+function Get-MirrorUrls($relPath, $fileName) {
+    $urls = @()
+    $encodedPath = ($relPath -split '/' | ForEach-Object { [Uri]::EscapeDataString($_) }) -join '/'
+    
+    # 1. GitHub Pages CDN (Fastly)
+    $urls += "https://vxnku.github.io/-HG-HGMM/$encodedPath"
+
+    # 2. Cloudflare Worker CDN
+    $urls += "https://bold-bread-e4ce.yuliy-ml.workers.dev/$encodedPath"
+
+    # 3. Google Drive direct link (if mapped)
+    if ($gdriveMapping.ContainsKey($fileName)) {
+        $entry = $gdriveMapping[$fileName]
+        if ($entry -and $entry.ContainsKey("download_url") -and -not [string]::IsNullOrEmpty($entry["download_url"])) {
+            $urls += $entry["download_url"]
+        } elseif ($entry -and $entry.ContainsKey("file_id") -and -not [string]::IsNullOrEmpty($entry["file_id"])) {
+            $urls += "https://drive.usercontent.google.com/download?id=" + $entry["file_id"] + "&export=download&confirm=t"
+        }
+    }
+
+    # 4. jsDelivr Open CDN
+    $urls += "https://cdn.jsdelivr.net/gh/Vxnku/-HG-HGMM@main/$encodedPath"
+
+    return ,@($urls)
+}
+
+# Add customblocklayer from GitHub repo (Multi-Mirror)
+$cblMirrors = Get-MirrorUrls "mods/customblocklayer-0.1.jar" "customblocklayer-0.1.jar"
 $cblEntry = @{
     "path" = "mods/customblocklayer-0.1.jar"
     "hashes" = @{
         "sha1" = $cblHash["sha1"]
         "sha512" = $cblHash["sha512"]
     }
-    "downloads" = @("https://github.com/Vxnku/-HG-HGMM/raw/main/mods/customblocklayer-0.1.jar")
+    "downloads" = [string[]]@($cblMirrors)
     "fileSize" = $cblHash["size"]
 }
 $newFiles.Add($cblEntry)
-Write-Host "Added mod: customblocklayer-0.1.jar"
+Write-Host "Added mod: customblocklayer-0.1.jar (Mirrors: $($cblMirrors.Count))"
 
-# Add the 4 resource packs from GitHub repo
+# Add the 4 resource packs from GitHub repo (Multi-Mirror)
 foreach ($rp in $rpNames) {
     $h = $rpHashInfo[$rp]
-    $encodedName = [Uri]::EscapeDataString("$rp.zip")
-    $downloadUrl = "https://github.com/Vxnku/-HG-HGMM/raw/main/zips/$encodedName"
+    $rpFileName = "$rp.zip"
+    $rpMirrors = Get-MirrorUrls "zips/$rpFileName" $rpFileName
     
     $rpEntry = @{
         "path" = "resourcepacks/$rp.zip"
@@ -202,27 +246,26 @@ foreach ($rp in $rpNames) {
             "sha1" = $h["sha1"]
             "sha512" = $h["sha512"]
         }
-        "downloads" = @($downloadUrl)
+        "downloads" = [string[]]@($rpMirrors)
         "fileSize" = $h["size"]
     }
     $newFiles.Add($rpEntry)
-    Write-Host ("Added resourcepack: " + $rp + ".zip")
+    Write-Host ("Added resourcepack: " + $rp + ".zip (Mirrors: $($rpMirrors.Count))")
 }
 
-# Add Советую Vanilla Tweaks!.file
-$vtEncoded = [Uri]::EscapeDataString($vtRussianName)
-$vtUrl = "https://github.com/Vxnku/-HG-HGMM/raw/main/$vtEncoded"
+# Add Советую Vanilla Tweaks!.file (Multi-Mirror)
+$vtMirrors = Get-MirrorUrls $vtRussianName $vtRussianName
 $vtEntry = @{
     "path" = "resourcepacks/$vtRussianName"
     "hashes" = @{
         "sha1" = $vtHash["sha1"]
         "sha512" = $vtHash["sha512"]
     }
-    "downloads" = @($vtUrl)
+    "downloads" = [string[]]@($vtMirrors)
     "fileSize" = 0
 }
 $newFiles.Add($vtEntry)
-Write-Host "Added file: $vtRussianName"
+Write-Host "Added file: $vtRussianName (Mirrors: $($vtMirrors.Count))"
 
 $indexObj["files"] = $newFiles.ToArray()
 $totalCount = $indexObj["files"].Count
