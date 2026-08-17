@@ -58,6 +58,7 @@ namespace HeroGuild.ClientInstaller
         private const string GITHUB_SERVER_INFO_URL = "https://vxnku.github.io/-HG-HGMM/server_info.json";
         private const string CLOUDFLARE_SERVER_INFO_URL = "https://bold-bread-e4ce.yuliy-ml.workers.dev/server_info.json";
         private const string GDRIVE_SERVER_INFO_URL = "https://drive.usercontent.google.com/download?id=1haCJcm_oAM3LR0Mhr-hM2a7Ln1-B5_Qt&export=download&confirm=t";
+        private const string GDRIVE_FABRIC_ZIP_URL = "https://drive.usercontent.google.com/download?id=1S65NDM9CpL8WsHgYdH6brsJ2MgU_3_dz&export=download&confirm=t";
         private const string JSDELIVR_SERVER_INFO_URL = "https://cdn.jsdelivr.net/gh/Vxnku/-HG-HGMM@main/server_info.json";
 
         private PictureBox picLogo;
@@ -1253,6 +1254,7 @@ namespace HeroGuild.ClientInstaller
                 string.Format("https://meta.fabricmc.net/v2/versions/loader/{0}/{1}/profile/zip", mcVersion, requiredLoaderVer),
                 string.Format("https://vxnku.github.io/-HG-HGMM/fabric/{0}", zipFileName),
                 string.Format("https://bold-bread-e4ce.yuliy-ml.workers.dev/fabric/{0}", zipFileName),
+                GDRIVE_FABRIC_ZIP_URL,
                 string.Format("https://cdn.jsdelivr.net/gh/Vxnku/-HG-HGMM@main/fabric/{0}", zipFileName)
             };
 
