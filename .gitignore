@@ -1,0 +1,20 @@
+# Visual Studio / IDE
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build & temp
+[Bb]in/
+[Oo]bj/
+*.tmp
+*.log
+
+# Nested swap/hosting Git repository
+/repo/
+
+# Large backup archives (hosted in -HG-HGMM repository)
+tools/*.zip
+*.zip
