@@ -13,6 +13,8 @@
 *.log
 *.pdb
 *.rar
+Import/
+
 
 # Nested swap/hosting Git repository
 /repo/
