@@ -11,6 +11,8 @@
 [Oo]bj/
 *.tmp
 *.log
+*.pdb
+*.rar
 
 # Nested swap/hosting Git repository
 /repo/

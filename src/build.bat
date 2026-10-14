@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0"
 
 echo ========================================================
-echo   Building HeroGuild Client Installer...
+echo   Building HeroGuild Client Installer (x64)...
 echo ========================================================
 echo.
 
@@ -19,7 +19,7 @@ if not exist "%CSC%" (
 )
 
 echo Compiling C# source code and embedding resources...
-"%CSC%" /target:winexe /optimize+ /platform:anycpu /win32icon:app.ico /win32manifest:app.manifest /resource:logo.png,HGLogo.png /resource:discord.png,DiscordLogo.png /r:System.Web.Extensions.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll /r:System.Windows.Forms.dll /r:System.Drawing.dll /out:..\HGInstaller.exe AssemblyInfo.cs HGInstaller.cs
+"%CSC%" /target:winexe /optimize+ /platform:x64 /debug:pdbonly /utf8output /win32icon:app.ico /win32manifest:app.manifest /resource:logo.png,HGLogo.png /resource:discord.png,DiscordLogo.png /r:System.Net.Http.dll /r:System.Web.Extensions.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll /r:System.Windows.Forms.dll /r:System.Drawing.dll /out:..\HGInstaller.exe AssemblyInfo.cs HGInstaller.cs
 
 if %ERRORLEVEL% EQU 0 (
     echo.
